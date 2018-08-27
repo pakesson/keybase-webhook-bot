@@ -91,6 +91,7 @@ func initConfig() {
 	viper.SetDefault("ListenAddress", ":8080")
 
 	viper.SetConfigName("config")
+	viper.AddConfigPath("$HOME/.config/keybase-webhook-bot")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
