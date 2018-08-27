@@ -41,6 +41,7 @@ func webhookHandler(webhooks []webhook, ch chan<- webhookPayload, writer http.Re
 			var msg webhookRequest
 			err := json.NewDecoder(request.Body).Decode(&msg)
 			if err != nil {
+				log.Printf("Invalid request: %v", err)
 				http.Error(writer, err.Error(), 400)
 				return
 			}
