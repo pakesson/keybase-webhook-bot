@@ -12,13 +12,13 @@ import (
 
 type webhook struct {
 	Token string
-	Team string
+	Team  string
 }
 
 type config struct {
-	KeybaseBin string
+	KeybaseBin    string
 	ListenAddress string
-	Webhooks []webhook
+	Webhooks      []webhook
 }
 
 type webhookRequest struct {
