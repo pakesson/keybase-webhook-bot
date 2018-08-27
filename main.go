@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
@@ -32,14 +34,32 @@ type webhookPayload struct {
 	Team    string
 }
 
+func parseRequest(request *http.Request) (webhookRequest, error) {
+	var msg webhookRequest
+	var err error
+
+	contentType := request.Header.Get("Content-Type")
+	if contentType == "application/json" {
+		err = json.NewDecoder(request.Body).Decode(&msg)
+	} else if contentType == "application/x-www-form-urlencoded" {
+		err = request.ParseForm()
+		if err == nil {
+			err = json.NewDecoder(strings.NewReader(request.PostFormValue("payload"))).Decode(&msg)
+		}
+	} else {
+		err = errors.New("Unknown content type")
+	}
+
+	return msg, err
+}
+
 func webhookHandler(webhooks []webhook, ch chan<- webhookPayload, writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	token := vars["token"]
 
 	for _, w := range webhooks {
 		if w.Token == token {
-			var msg webhookRequest
-			err := json.NewDecoder(request.Body).Decode(&msg)
+			msg, err := parseRequest(request)
 			if err != nil {
 				log.Printf("Invalid request: %v", err)
 				http.Error(writer, err.Error(), 400)
@@ -49,7 +69,7 @@ func webhookHandler(webhooks []webhook, ch chan<- webhookPayload, writer http.Re
 			if payload.Channel == "" {
 				payload.Channel = "general"
 			}
-			log.Printf("Webhook payload: %v\n", payload)
+			log.Printf("Webhook payload: %+v\n", payload)
 			ch <- payload
 			return
 		}
